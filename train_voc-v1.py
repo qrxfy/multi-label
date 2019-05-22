@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torchvision import datasets, transforms, models
+from torchvision import transforms, models
+from datasetclass17 import Datasetee17
 # D:\Anaconda3\pkgs\torchvision-0.2.2-py_3\site-packages\torchvision\models
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
@@ -23,20 +24,40 @@ def train(args, model, device, train_loader, optimizer, epoch):
 def test(args, model, device, test_loader):
     model.eval()
     test_loss=0
-    correct=0
+    correct=[0]*20
+    num=[0]*20
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output, _, _ = model(data)
             test_loss += F.cross_entropy(output, target, reduction='sum').item()
-            pred = output.argmax
-            correct += pred.eq(target.view_as(pred)).sum.otem()
+            threshold=sum(output)/10
+            ToF=np.array(output)>threshold
+            '''index=0
+            n=0
+            pred = []
+            for judge in ToF:
+                if judge:
+                    pred[index]=n
+                    index += 1
+                n=n+1
             
-    test_loss /= len(test_loader.dataset)
+            for index1 in target:
+                num[index1]=num[index1]+1
+                for index2 in pred:
+                    if index2==index1:
+                        correct[index2] += 1
+                        '''
+            num = num+np.array(target)
+            correct = correct+1-(ToF^np.array(target))
+                        
+    num = np.array(num)
+    correct = np.array(correct)
+    test_loss = correct/num
+    mAcc = sum(test_loss)/20
+    wAcc = sum(correct)/sum(num)
 
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))    
+    print('\nTest set: mAcc: {:.4f}, wAcc: {:.4f} \n'.format(mAcc,wAcc))
                
 def main():
     # Training configurations
@@ -69,6 +90,20 @@ def main():
     
     # data loaders
     print('data loading...\n')
+    transform1 = transforms.Compose([
+                               transforms.Resize(224),
+                               transforms.CenterCrop(224),
+                               transforms.ToTensor(),
+                               transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                           ])
+    
+    train_loader = torch.utils.data.DataLoader(
+        Datasetee17('./PascalVOC/','train.txt',transform=transform1),
+            batch_size=args.batch_size, shuffle=True, **kwargs)
+    
+    test_loader = torch.utils.data.DataLoader(
+        Datasetee17('./PascalVOC/','test.txt',transform=transform1),
+            batch_size=args.batch_size, shuffle=True, **kwargs)
     
 
     
