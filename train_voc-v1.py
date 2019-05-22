@@ -7,6 +7,12 @@ import torch.optim as optim
 from torchvision import transforms, models
 from datasetclass17 import Datasetee17
 # D:\Anaconda3\pkgs\torchvision-0.2.2-py_3\site-packages\torchvision\models
+
+def adjust_learning_rate(lr, optimizer, epoch):
+    lr = lr*(0.1**(epoch//30))
+    for param_group in optimizer.param_groups:
+        param_group['lr']=lr
+
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
     start_time = time.time()
@@ -112,6 +118,7 @@ def main():
     
     # train and test
     for epoch in range(1, args.epochs+1):
+        adjust_learning_rate(args.lr, optimizer, epoch)
         train(args, net, device, train_loader, optimizer, epoch)
         test(args, net, device, test_loader)
 
